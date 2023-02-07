@@ -28,11 +28,14 @@ class GanTrainer:
         self.discriminator = Discriminator()
         self.batch_size = 64
         self.val_batch_size = 128
-        self.lr_g=0.0002 
-        self.lr_d=0.0002
-        self.beta1=0.5
+        self.lr_g=0.0001 
+        self.lr_d=0.0001
+        self.beta1=0
+        self.weight_clip=.01
         self.criterion = torch.nn.BCEWithLogitsLoss()
         self.tensorboard_path = 'runs/cats'
+        self.discriminator_iterations = 5
+        self.lambda_gradient_penalty = 10.0
 
         # Update all values based on kwargs
         self.__dict__.update(kwargs)
@@ -43,13 +46,46 @@ class GanTrainer:
         self.writer = SummaryWriter(self.tensorboard_path + datetime.now().strftime("_%m-%d-%Y_%H-%M-%S"))
         self.writer.add_graph(self.generator, torch.randn((1, self.nz)))
         self.writer.add_graph(self.discriminator, torch.randn((1, 3, 64, 64)))
+        self.generator.apply(self.weights_init)
+        self.discriminator.apply(self.weights_init)
         self.generator.to(self.device)
         self.discriminator.to(self.device)
         self.optimizerG = torch.optim.Adam(self.generator.parameters(), lr=self.lr_g, betas=(self.beta1, 0.999))
         self.optimizerD = torch.optim.Adam(self.discriminator.parameters(), lr=self.lr_d, betas=(self.beta1, 0.999))
         self.i = len(self.results_df)
     
-    def do_batch(self, train=True):
+    @staticmethod
+    def weights_init(m):
+        if isinstance(m, torch.nn.Conv2d) or isinstance(m, torch.nn.ConvTranspose2d):
+            torch.nn.init.normal_(m.weight, mean=0.0, std=0.02)
+        if isinstance(m, torch.nn.BatchNorm2d):
+            torch.nn.init.normal_(m.weight, mean=0.0, std=0.02)
+            torch.nn.init.constant_(m.bias, val=0)
+
+    def gradient_penalty(self, real_images, fake_images):
+        batch_size, channel, height, width = real_images.shape
+        alpha = torch.rand(batch_size, 1, 1, 1).repeat(1, channel, height, width)
+        interpolated_image=(alpha*real_images) + (1-alpha) * fake_images
+        
+        # calculate the critic score on the interpolated image
+        interpolated_score= self.discriminator(interpolated_image)
+        
+        # take the gradient of the score wrt to the interpolated image
+        gradient= torch.autograd.grad(
+            inputs=interpolated_image,
+            outputs=interpolated_score,
+            retain_graph=True,
+            create_graph=True,
+            grad_outputs=torch.ones_like(interpolated_score)                          
+        )[0]
+
+        gradient= gradient.view(gradient.shape[0], -1)
+        gradient_norm= gradient.norm(2, dim=1)
+        gp=torch.mean((gradient_norm-1)**2)
+
+        return self.lambda_gradient_penalty * gp
+
+    def do_batch(self, train=True, generator_step=True):
         if train:
             self.optimizerG.zero_grad()
             self.optimizerD.zero_grad()
@@ -61,23 +97,27 @@ class GanTrainer:
             real_images = next(iter(self.val_dataloader))
         num_images_batch = real_images.shape[0]
         real_images = real_images.to(self.device)
-        real_labels = torch.ones((num_images_batch, 1), device=self.device)
         real_preds = self.discriminator(real_images)
 
         # Fake images
         noise = torch.randn((num_images_batch, self.nz), device=self.device)
         fake_images = self.generator(noise)
-        fake_labels = torch.zeros((num_images_batch, 1), device=self.device)
         fake_preds = self.discriminator(fake_images)
 
         # Calculate loss
-        d_loss = (self.criterion(real_preds, real_labels) + self.criterion(fake_preds, fake_labels)) / 2
-        g_loss = self.criterion(fake_preds, real_labels)
+        gp = self.gradient_penalty(real_images, fake_images)
+        d_loss = torch.mean(fake_preds) - torch.mean(real_preds) + gp
+        g_loss = -torch.mean(fake_preds)
 
         if train:
             # Gradient descent
             d_loss.backward(retain_graph=True)
-            g_loss.backward()
+            if generator_step:
+                g_loss.backward()
+
+            for p in self.discriminator.parameters():
+                p.data.clamp_(-self.weight_clip, self.weight_clip)
+
             self.optimizerD.step()
             self.optimizerG.step()
 
@@ -105,15 +145,15 @@ class GanTrainer:
         self.writer.add_scalars(
             'loss', 
             {
-                f"Discriminator / {type_str}": results["D_loss"], 
-                f"Generator / {type_str}": results["G_loss"]
+                f"Discriminator - {type_str}": results["D_loss"], 
+                f"Generator - {type_str}": results["G_loss"]
             }, 
             self.i)
         self.writer.add_scalars(
             'Performance', 
             {
-                f"Discriminator (accuracy) / {type_str}": results["D_acc"],
-                f"Generator (trick performance) / {type_str}": results["G_perf"]
+                f"Discriminator (accuracy) - {type_str}": results["D_acc"],
+                f"Generator (trick performance) - {type_str}": results["G_perf"]
             }, 
             self.i)
         self.writer.flush()
@@ -134,7 +174,10 @@ class GanTrainer:
         for epoch in range(1, self.n_epochs + 1):
             pbar = trange(len(self.train_dataloader))
             for batch in pbar:
-                results_train = self.do_batch(train=True)
+                if self.i % self.discriminator_iterations == 0:
+                    results_train = self.do_batch(train=True, generator_step=False)
+                else:
+                    results_train = self.do_batch(train=True, generator_step=True)
                 results_train['i'] = self.i
                 results_train['epoch'] = epoch
                 results_train['batch'] = batch
