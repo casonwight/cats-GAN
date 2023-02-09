@@ -11,8 +11,8 @@ The generator $G$ will take a random vector $Z$ and produce a fake image $x^*$. 
 $$
 \begin{aligned}
 z_i&\sim U(0, 1)\\
-G(Z)&=x^*,~x^*\sim x \\
-D(x^*)&=0 \\
+G(Z)&=x',~x'\sim x \\
+D(x')&=0 \\
 D(x)&=1
 \end{aligned}
 $$

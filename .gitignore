@@ -1,6 +1,12 @@
 cats-GAN.code-workspace
 data/*
 !data/.gitkeep 
+!data/cats/cat_0.png
+!data/cats/cat_1.png
+!data/cats/cat_2.png
+!data/cats/cat_3.png
+!data/cats/cat_4.png
+!data/cats/cat_5.png
 saved_models/*
 !saved_models/.gitkeep 
 runs/*
