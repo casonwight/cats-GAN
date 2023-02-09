@@ -6,7 +6,7 @@ This repo is intended to be used as both a general framework for producing simpl
 
 The GAN in this repo has two separate models, a discriminator and a generator.
 
-The generator $G$ will take a random vector $Z$ and produce a fake image $x^*$. If the generator is successful, the fake image $x^*$ will approximate the distribution of real images $x$. If the discriminator $D$ is successful, then it will be able to distinguish between real images and fake images.
+The generator $G$ will take a random vector $Z$ and produce a fake image $x^*$. If the generator is successful, the fake image $x'$ will approximate the distribution of real images $x$. If the discriminator $D$ is successful, then it will be able to distinguish between real images and fake images.
 
 $$
 \begin{aligned}
