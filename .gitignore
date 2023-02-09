@@ -1,6 +1,5 @@
 cats-GAN.code-workspace
-data/*
-!data/.gitkeep 
+data/cats/*
 !data/cats/.gitkeep
 !data/cats/cat_0.png
 !data/cats/cat_1.png
