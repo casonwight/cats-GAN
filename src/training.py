@@ -32,10 +32,9 @@ class GanTrainer:
         self.lr_d=0.0001
         self.beta1=0
         self.weight_clip=.01
-        self.criterion = torch.nn.BCEWithLogitsLoss()
         self.tensorboard_path = 'runs/cats'
         self.discriminator_iterations = 5
-        self.lambda_gradient_penalty = 10.0
+        self.lambda_gradient_penalty = 10
 
         # Update all values based on kwargs
         self.__dict__.update(kwargs)
@@ -48,6 +47,8 @@ class GanTrainer:
         self.writer.add_graph(self.discriminator, torch.randn((1, 3, 64, 64)))
         self.generator.apply(self.weights_init)
         self.discriminator.apply(self.weights_init)
+        for p in self.discriminator.parameters():
+            p.data.clamp_(-self.weight_clip, self.weight_clip)
         self.generator.to(self.device)
         self.discriminator.to(self.device)
         self.optimizerG = torch.optim.Adam(self.generator.parameters(), lr=self.lr_g, betas=(self.beta1, 0.999))
@@ -64,24 +65,23 @@ class GanTrainer:
 
     def gradient_penalty(self, real_images, fake_images):
         batch_size, channel, height, width = real_images.shape
-        alpha = torch.rand(batch_size, 1, 1, 1).repeat(1, channel, height, width)
-        interpolated_image=(alpha*real_images) + (1-alpha) * fake_images
-        
+        alpha = torch.rand(batch_size, 1, 1, 1).repeat(1, channel, height, width).to(self.device)
+        interpolated_images = alpha * real_images + (1 - alpha) * fake_images
+        interpolated_images.requires_grad_()
+
         # calculate the critic score on the interpolated image
-        interpolated_score= self.discriminator(interpolated_image)
+        interpolated_scores = self.discriminator(interpolated_images)
         
         # take the gradient of the score wrt to the interpolated image
-        gradient= torch.autograd.grad(
-            inputs=interpolated_image,
-            outputs=interpolated_score,
+        gradient = torch.autograd.grad(
+            inputs=interpolated_images,
+            outputs=interpolated_scores,
             retain_graph=True,
             create_graph=True,
-            grad_outputs=torch.ones_like(interpolated_score)                          
+            grad_outputs=torch.ones_like(interpolated_scores)                       
         )[0]
 
-        gradient= gradient.view(gradient.shape[0], -1)
-        gradient_norm= gradient.norm(2, dim=1)
-        gp=torch.mean((gradient_norm-1)**2)
+        gp = ((gradient.norm(2, dim=1) - 1) ** 2).mean()
 
         return self.lambda_gradient_penalty * gp
 
@@ -105,21 +105,30 @@ class GanTrainer:
         fake_preds = self.discriminator(fake_images)
 
         # Calculate loss
-        gp = self.gradient_penalty(real_images, fake_images)
-        d_loss = torch.mean(fake_preds) - torch.mean(real_preds) + gp
         g_loss = -torch.mean(fake_preds)
+        d_loss = torch.mean(fake_preds) - torch.mean(real_preds)
 
+        # Gradient descent
         if train:
-            # Gradient descent
-            d_loss.backward(retain_graph=True)
-            if generator_step:
-                g_loss.backward()
+            # gp = self.gradient_penalty(real_images, fake_images)
+            # d_loss += gp
 
+            # Replace discriminator gradient
+            self.optimizerD.zero_grad()
+            d_loss.backward(retain_graph=True)
+            
+            # Replace the generator gradient and take a descent step
+            if generator_step:
+                self.optimizerG.zero_grad()
+                g_loss.backward()
+                self.optimizerG.step()
+            
+            # Get new weights for discriminator
+            self.optimizerD.step()
+
+            # Clamp the discriminator weights
             for p in self.discriminator.parameters():
                 p.data.clamp_(-self.weight_clip, self.weight_clip)
-
-            self.optimizerD.step()
-            self.optimizerG.step()
 
         # Calculate discriminator accuracy
         real_acc = torch.mean((real_preds > 0).float()).item()
@@ -175,9 +184,9 @@ class GanTrainer:
             pbar = trange(len(self.train_dataloader))
             for batch in pbar:
                 if self.i % self.discriminator_iterations == 0:
-                    results_train = self.do_batch(train=True, generator_step=False)
-                else:
                     results_train = self.do_batch(train=True, generator_step=True)
+                else:
+                    results_train = self.do_batch(train=True, generator_step=False)
                 results_train['i'] = self.i
                 results_train['epoch'] = epoch
                 results_train['batch'] = batch
@@ -197,7 +206,7 @@ class GanTrainer:
                 # Validation 
                 if self.i % self.val_every == 0:
                     with torch.no_grad():
-                        results_val = self.do_batch(train=False)
+                        results_val = self.do_batch(train=False, generator_step=False)
                         results_val['i'] = self.i
                         results_val['epoch'] = epoch
                         results_val['batch'] = batch
