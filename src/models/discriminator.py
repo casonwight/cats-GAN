@@ -8,37 +8,37 @@ class Discriminator(nn.Module):
 
     self.layer1 = nn.Sequential(
       nn.Conv2d(3, 16, kernel_size=3, padding=1),
-      nn.BatchNorm2d(16, affine=True),
+      nn.InstanceNorm2d(16, affine=True),
       nn.LeakyReLU(.2, inplace=False),
       nn.Conv2d(16, 64, kernel_size=3, padding=1),
-      nn.BatchNorm2d(64, affine=True),
+      nn.InstanceNorm2d(64, affine=True),
       nn.LeakyReLU(.2, inplace=False),
       nn.MaxPool2d(2)
     )
 
     self.layer2 = nn.Sequential(
       nn.Conv2d(64, 128, kernel_size=3, padding=1),
-      nn.BatchNorm2d(128, affine=True),
+      nn.InstanceNorm2d(128, affine=True),
       nn.LeakyReLU(.2, inplace=False),
       nn.Conv2d(128, 256, kernel_size=3, padding=1),
-      nn.BatchNorm2d(256, affine=True),
+      nn.InstanceNorm2d(256, affine=True),
       nn.LeakyReLU(.2, inplace=False),
       nn.MaxPool2d(2),
     )
 
     self.layer3 = nn.Sequential(
       nn.Conv2d(256, 512, kernel_size=3, padding=1),
-      nn.BatchNorm2d(512, affine=True),
+      nn.InstanceNorm2d(512, affine=True),
       nn.LeakyReLU(.2, inplace=False),
       nn.Conv2d(512, 1024, kernel_size=3, padding=1),
-      nn.BatchNorm2d(1024, affine=True),
+      nn.InstanceNorm2d(1024, affine=True),
       nn.LeakyReLU(.2, inplace=False),
       nn.MaxPool2d(2),
     )
 
     self.layer4 = nn.Sequential(
       nn.Conv2d(1024, 512, kernel_size=3, padding=1),
-      nn.BatchNorm2d(512, affine=True),
+      nn.InstanceNorm2d(512, affine=True),
       nn.LeakyReLU(.2, inplace=False),
       nn.Conv2d(512, 256, kernel_size=8, padding=0),
       nn.LeakyReLU(0.2, inplace=False),
