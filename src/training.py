@@ -29,8 +29,8 @@ class GanTrainer:
         self.discriminator = Discriminator()
         self.batch_size = 64
         self.val_batch_size = 128
-        self.lr_g=0.0001 
-        self.lr_d=0.0001
+        self.lr_g=0.00005
+        self.lr_d=0.00005
         self.weight_clip=.01
         self.tensorboard_path = 'runs/cats'
         self.discriminator_iterations = 5
