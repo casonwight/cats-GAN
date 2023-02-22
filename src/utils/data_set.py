@@ -9,7 +9,8 @@ class CatDataset(Dataset):
     def __init__(self, data_dir='./data/cats/', train=True, seed=42, train_pct=.80):
         super().__init__()
         self.data_dir = data_dir
-        all_img_labels = os.listdir(data_dir).remove(".gitkeep")
+        all_img_labels = os.listdir(data_dir)
+        all_img_labels.remove(".gitkeep")
         num_train_imgs = int(len(all_img_labels) * train_pct)
         np.random.seed(seed)
         all_img_labels = np.random.permutation(all_img_labels)
