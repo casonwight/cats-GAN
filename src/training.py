@@ -109,7 +109,8 @@ class GanTrainer:
 
         # Calculate loss
         d_loss = torch.mean(fake_preds) - torch.mean(real_preds)
-        d_loss += self.gradient_penalty(real_images.data, fake_images.data)
+        # d_loss += self.gradient_penalty(real_images.data, fake_images.data)
+        g_loss = -torch.mean(fake_preds)
 
         # Gradient descent
         if train:
