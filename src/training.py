@@ -104,11 +104,10 @@ class GanTrainer:
 
         # Fake images
         noise = Variable(torch.randn((num_images_batch, self.nz), device=self.device))
-        fake_images = self.generator(noise)
+        fake_images = self.generator(noise).detach()
         fake_preds = self.discriminator(fake_images)
 
         # Calculate loss
-        g_loss = -torch.mean(fake_preds)
         d_loss = torch.mean(fake_preds) - torch.mean(real_preds)
         d_loss += self.gradient_penalty(real_images.data, fake_images.data)
 
@@ -120,6 +119,14 @@ class GanTrainer:
             
             # Replace the generator gradient and take a descent step
             if generator_step:
+                # Fake images
+                noise = Variable(torch.randn((num_images_batch, self.nz), device=self.device))
+                fake_images = self.generator(noise).detach()
+                fake_preds = self.discriminator(fake_images)
+
+                # Calculate loss
+                g_loss = -torch.mean(fake_preds)
+
                 self.optimizerG.zero_grad()
                 g_loss.backward()
                 self.optimizerG.step()
