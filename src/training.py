@@ -64,23 +64,24 @@ class GanTrainer:
             torch.nn.init.constant_(m.bias, val=0)
 
     def gradient_penalty(self, real_images, fake_images):
-        batch_size, channel, height, width = real_images.shape
+        batch_size, _ = real_images.shape
         alpha = torch.rand(batch_size, 1, 1, 1).to(self.device)
-        interpolated_images = (alpha * real_images + (1 - alpha) * fake_images).requires_grad_()
+        interpolated_images = (alpha * real_images + (1 - alpha) * fake_images).requires_grad_(True)
 
         # calculate the critic score on the interpolated image
         interpolated_scores = self.discriminator(interpolated_images)
         
         # The optimal output of the critic is 1 (on behalf of the generator)
-        fake = Variable(torch.ones_like(interpolated_scores).to(self.device))
+        fake = torch.ones_like(interpolated_scores).to(self.device)
 
         # take the gradient of the score wrt to the interpolated image
         gradient = torch.autograd.grad(
             inputs=interpolated_images,
             outputs=interpolated_scores,
+            grad_outputs=fake,
             retain_graph=True,
             create_graph=True,
-            grad_outputs=fake                       
+            only_inputs=True                    
         )[0]
 
         gp = ((gradient.norm(2, dim=1) - 1) ** 2).mean()
@@ -109,7 +110,7 @@ class GanTrainer:
         # Calculate loss
         g_loss = -torch.mean(fake_preds)
         d_loss = torch.mean(fake_preds) - torch.mean(real_preds)
-        d_loss += self.gradient_penalty(real_images.data, fake_images.data)
+        # d_loss += self.gradient_penalty(real_images.data, fake_images.data)
 
         # Gradient descent
         if train:
