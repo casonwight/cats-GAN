@@ -64,7 +64,7 @@ class GanTrainer:
             torch.nn.init.constant_(m.bias, val=0)
 
     def gradient_penalty(self, real_images, fake_images):
-        batch_size, _ = real_images.shape
+        batch_size = real_images.size(0)
         alpha = torch.rand(batch_size, 1, 1, 1).to(self.device)
         interpolated_images = (alpha * real_images + (1 - alpha) * fake_images).requires_grad_(True)
 
@@ -110,7 +110,7 @@ class GanTrainer:
         # Calculate loss
         g_loss = -torch.mean(fake_preds)
         d_loss = torch.mean(fake_preds) - torch.mean(real_preds)
-        # d_loss += self.gradient_penalty(real_images.data, fake_images.data)
+        d_loss += self.gradient_penalty(real_images.data, fake_images.data)
 
         # Gradient descent
         if train:
