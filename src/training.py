@@ -16,8 +16,8 @@ class GanTrainer:
     def __init__(self, **kwargs):
         # Default values for GAN training class
         self.device = 'cpu'
-        self.data_dir = './data/cats/'
-        self.save_dir='./saved_models/'
+        self.data_dir = '../data/cats/'
+        self.save_dir='../saved_models/'
         self.save_name = 'cats'
         self.save_every = 100
         self.val_every = 25
