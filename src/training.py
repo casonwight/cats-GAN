@@ -1,4 +1,5 @@
 import torch
+from torch.autograd import Variable
 import pandas as pd
 from tqdm import trange
 from torchvision import transforms
@@ -30,7 +31,6 @@ class GanTrainer:
         self.val_batch_size = 128
         self.lr_g=0.0001 
         self.lr_d=0.0001
-        self.beta1=0
         self.weight_clip=.01
         self.tensorboard_path = 'runs/cats'
         self.discriminator_iterations = 5
@@ -51,8 +51,8 @@ class GanTrainer:
             p.data.clamp_(-self.weight_clip, self.weight_clip)
         self.generator.to(self.device)
         self.discriminator.to(self.device)
-        self.optimizerG = torch.optim.Adam(self.generator.parameters(), lr=self.lr_g, betas=(self.beta1, 0.999))
-        self.optimizerD = torch.optim.Adam(self.discriminator.parameters(), lr=self.lr_d, betas=(self.beta1, 0.999))
+        self.optimizerG = torch.optim.RMSprop(self.generator.parameters(), lr=self.lr_g)
+        self.optimizerD = torch.optim.RMSprop(self.discriminator.parameters(), lr=self.lr_d)
         self.i = len(self.results_df)
     
     @staticmethod
@@ -65,20 +65,22 @@ class GanTrainer:
 
     def gradient_penalty(self, real_images, fake_images):
         batch_size, channel, height, width = real_images.shape
-        alpha = torch.rand(batch_size, 1, 1, 1).repeat(1, channel, height, width).to(self.device)
-        interpolated_images = alpha * real_images + (1 - alpha) * fake_images
-        interpolated_images.requires_grad_()
+        alpha = torch.rand(batch_size, 1, 1, 1).to(self.device)
+        interpolated_images = (alpha * real_images + (1 - alpha) * fake_images).requires_grad_()
 
         # calculate the critic score on the interpolated image
         interpolated_scores = self.discriminator(interpolated_images)
         
+        # The optimal output of the critic is 1 (on behalf of the generator)
+        fake = Variable(torch.ones_like(interpolated_scores).to(self.device))
+
         # take the gradient of the score wrt to the interpolated image
         gradient = torch.autograd.grad(
             inputs=interpolated_images,
             outputs=interpolated_scores,
             retain_graph=True,
             create_graph=True,
-            grad_outputs=torch.ones_like(interpolated_scores)                       
+            grad_outputs=fake                       
         )[0]
 
         gp = ((gradient.norm(2, dim=1) - 1) ** 2).mean()
@@ -100,7 +102,7 @@ class GanTrainer:
         real_preds = self.discriminator(real_images)
 
         # Fake images
-        noise = torch.randn((num_images_batch, self.nz), device=self.device)
+        noise = Variable(torch.randn((num_images_batch, self.nz), device=self.device))
         fake_images = self.generator(noise)
         fake_preds = self.discriminator(fake_images)
 
