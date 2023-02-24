@@ -1,5 +1,6 @@
 import streamlit as st
 import torch
+from torchvision import utils
 
 
 def main():
@@ -9,9 +10,9 @@ def main():
     model = torch.jit.load("saved_models/generators/generator-cats.pt")
 
     # Generate a random cat
-    if st.button("Generate a cat"):
+    if st.button("Generate some cats"):
         # Generate a random cat
-        cat = torch.clamp(model(torch.randn(1, 100, 1, 1)), 0, 1)
+        cat = utils.make_grid(model(torch.randn(16, 100, 1, 1)), nrow=4, normalize=True)
         
         # Convert the tensor to numpy array
         cat = cat.squeeze().permute(1, 2, 0).detach().cpu().numpy()
