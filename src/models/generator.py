@@ -3,7 +3,7 @@ import torch
 
 
 class Generator(nn.Module):
-    def __init__(self, nz):
+    def __init__(self, nz=100):
         super().__init__()
         self.nz = nz
 
@@ -48,11 +48,10 @@ class Generator(nn.Module):
 
 
 if __name__ == '__main__':
-    nz = 100
-    model = Generator(nz)
+    model = Generator()
     print(model)
 
-    x = torch.randn(10, nz)
+    x = torch.randn(10, model.nz)
     print(x.shape)
 
     y = model(x)
