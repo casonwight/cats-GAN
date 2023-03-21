@@ -206,10 +206,17 @@ class GanTrainer:
 
                 if i % self.save_every == 0:
                     # Save generator and discriminator as a .pt file with jit
-                    torch.jit.save(torch.jit.script(self.generator), f'{self.model_dir}/generator.pt')
-                    torch.jit.save(torch.jit.script(self.discriminator), f'{self.model_dir}/discriminator.pt')
+                    torch.jit.save(torch.jit.script(self.generator.cpu()), f'{self.model_dir}/generator.pt')
+                    torch.jit.save(torch.jit.script(self.discriminator.cpu()), f'{self.model_dir}/discriminator.pt')
+
+                    self.generator = self.generator.to(self.device)
+                    self.discriminator = self.discriminator.to(self.device)
 
                 i += 1
+
+        # Save the displayed images (concatenate into single tensor first)
+        self.displayed_images = torch.cat(self.displayed_images, dim=0)
+        torch.save(self.displayed_images, f'{self.model_dir}/image_progression.pt')
 
         plt.ioff()
         plt.show()

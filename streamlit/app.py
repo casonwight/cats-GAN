@@ -7,7 +7,7 @@ def main():
     st.title("Cats GAN")
 
     # Load pytorch .pt model
-    model = torch.jit.load("saved_models/generators/generator-cats.pt")
+    model = torch.jit.load("saved_models/generator.pt", map_location=torch.device('cpu')).cpu()
 
     # Generate a random cat
     if st.button("Generate some cats"):
