@@ -1,5 +1,5 @@
 # This file may be used to create an environment using:
 # $ conda create --name <env> --file <this file>
 # platform: win-64
-pytorch==1.13.1
-torchvision==0.14.1
+pytorch
+torchvision
