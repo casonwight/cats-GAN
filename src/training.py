@@ -26,6 +26,7 @@ class GanTrainer:
         self.display_cols = int(self.display_num_images ** 0.5)
         self.displayed_images = []
         self.constant_noise = torch.randn(self.display_num_images, self.generator.nz, 1, 1).cpu()
+        self.model_dir = "../saved_models"
 
         self.fig, self.axes = plt.subplots(nrows=self.display_cols, ncols=self.display_cols, figsize=(8, 8))
         self.fig.subplots_adjust(hspace=0.1, wspace=0.1)
@@ -206,8 +207,8 @@ class GanTrainer:
 
                 if i % self.save_every == 0:
                     # Save generator and discriminator as a .pt file with jit
-                    torch.jit.save(torch.jit.script(self.generator), f'saved_models/generator.pt')
-                    torch.jit.save(torch.jit.script(self.discriminator), f'saved_models/discriminator.pt')
+                    torch.jit.save(torch.jit.script(self.generator), f'{self.model_dir}/generator.pt')
+                    torch.jit.save(torch.jit.script(self.discriminator), f'{self.model_dir}/discriminator.pt')
 
                 i += 1
 
