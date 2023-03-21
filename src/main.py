@@ -8,7 +8,7 @@ from models.discriminator import Discriminator
 
 def main():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    data_dir = '..data/cats/'
+    data_dir = '../data/cats/'
     batch_size = 64
     val_batch_size = 64
     train_dataloader, val_dataloader = get_data_loaders(data_dir, batch_size, val_batch_size)
