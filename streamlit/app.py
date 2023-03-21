@@ -1,11 +1,11 @@
 import streamlit as st
 import torch
 from torchvision import utils
-import numpy as np
-import mediapy as media
 
 
 def main():
+    st.set_page_config(page_title="Cats-GAN", page_icon=":cat:")
+
     st.title("Cats-GAN")
 
     # Load pytorch .pt model
