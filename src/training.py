@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 class GanTrainer:
     def __init__(self, train_dataloader, val_dataloader, generator, discriminator, **kwargs):
-        self.num_epochs = 50
+        self.num_epochs = 30
         self.discriminator_iter = 5
         self.lambda_gp = 10
         self.train_dataloader = train_dataloader
@@ -115,6 +115,43 @@ class GanTrainer:
 
             plt.show(block=False)
             return fake_images
+
+    def plot_results(self):
+        # generator plot and discriminator side-by-side plots
+        # loss above and accuracy below (4 total plots)
+        fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(10, 10))
+
+        # G loss
+        axes[0, 0].plot(self.training_results.query("type == 'train'")['i'], self.training_results.query("type == 'train'")['g_loss'], label="Train")
+        axes[0, 0].plot(self.training_results.query("type == 'val'")['i'], self.training_results.query("type == 'val'")['g_loss'], label="Validation")
+
+        # D loss
+        axes[0, 1].plot(self.training_results.query("type == 'train'")['i'], self.training_results.query("type == 'train'")['d_loss'], label="Train")
+        axes[0, 1].plot(self.training_results.query("type == 'val'")['i'], self.training_results.query("type == 'val'")['d_loss'], label="Validation")
+
+        # G accuracy
+        axes[1, 0].plot(self.training_results.query("type == 'train'")['i'], 100 * self.training_results.query("type == 'train'")['g_acc'], label="Train")
+        axes[1, 0].plot(self.training_results.query("type == 'val'")['i'], 100 * self.training_results.query("type == 'val'")['g_acc'], label="Validation")
+
+        # D accuracy
+        axes[1, 1].plot(self.training_results.query("type == 'train'")['i'], 100 * self.training_results.query("type == 'train'")['d_acc'], label="Train")
+        axes[1, 1].plot(self.training_results.query("type == 'val'")['i'], 100 * self.training_results.query("type == 'val'")['d_acc'], label="Validation")
+
+        axes[0, 0].set_title('Generator Loss')
+        axes[0, 1].set_title('Discriminator Loss')
+        axes[1, 0].set_title('Generator Accuracy')
+        axes[1, 1].set_title('Discriminator Accuracy')
+
+        # grid
+        for ax in axes.flatten():
+            ax.grid()
+            ax.legend()
+        
+        # legend
+        fig.legend(loc='upper center', bbox_to_anchor=(0.5, 0.95), ncol=2)
+        
+
+
 
     def train(self):
         plt.ion()
