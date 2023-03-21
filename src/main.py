@@ -13,6 +13,7 @@ def main():
     val_batch_size = 64
     train_dataloader, val_dataloader = get_data_loaders(data_dir, batch_size, val_batch_size)
     generator, discriminator = Generator(), Discriminator()
+    generator, discriminator = generator.to(device), discriminator.to(device)
 
     trainer = GanTrainer(train_dataloader, val_dataloader, generator, discriminator, device=device, num_epochs=1)
     trainer.train()
