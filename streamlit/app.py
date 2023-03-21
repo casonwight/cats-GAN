@@ -6,10 +6,10 @@ import mediapy as media
 
 
 def main():
-    st.title("Cats GAN")
+    st.title("Cats-GAN")
 
     # Load pytorch .pt model
-    model = torch.jit.load("saved_models/generator (4).pt", map_location=torch.device('cpu')).cpu()
+    model = torch.jit.load("saved_models/generator.pt", map_location=torch.device('cpu')).cpu()
 
     # Generate a random cat
     if st.button("Generate some cats"):
