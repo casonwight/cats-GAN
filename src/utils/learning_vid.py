@@ -15,6 +15,7 @@ def main():
 
 
     media.write_video("saved_models/progression.mp4", video_out, fps=30)
+    media.write_video("saved_models/progression.gif", video_out, fps=30)
 
 if __name__ == "__main__":
     main()
