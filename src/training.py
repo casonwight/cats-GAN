@@ -156,7 +156,7 @@ class GanTrainer:
         plt.ion()
         i = 0
         for epoch in range(self.num_epochs):
-            pbar = tqdm(enumerate(self.train_dataloader, i))
+            pbar = tqdm(enumerate(self.train_dataloader))
 
             for batch_num, real_images in pbar:
                 real_images = real_images.to(self.device)
