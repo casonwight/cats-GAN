@@ -157,7 +157,6 @@ class GanTrainer:
         i = 0
         for epoch in range(self.num_epochs):
             pbar = tqdm(enumerate(self.train_dataloader, i))
-            pbar.set_description(f'Epoch {epoch+1}/{self.num_epochs}, Batch: {1}/{len(self.train_dataloader)}')
 
             for batch_num, real_images in pbar:
                 real_images = real_images.to(self.device)

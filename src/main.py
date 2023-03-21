@@ -16,7 +16,7 @@ def main():
     generator, discriminator = Generator(), Discriminator()
     generator, discriminator = generator.to(device), discriminator.to(device)
 
-    trainer = GanTrainer(train_dataloader, val_dataloader, generator, discriminator, device=device, num_epochs=1, model_dir=model_dir)
+    trainer = GanTrainer(train_dataloader, val_dataloader, generator, discriminator, device=device, num_epochs=50, model_dir=model_dir)
     trainer.train()
 
 if __name__ == "__main__":
