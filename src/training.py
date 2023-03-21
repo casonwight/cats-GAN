@@ -149,9 +149,7 @@ class GanTrainer:
         
         # legend
         fig.legend(loc='upper center', bbox_to_anchor=(0.5, 0.95), ncol=2)
-        
-
-
+        plt.show()
 
     def train(self):
         plt.ion()
