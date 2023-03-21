@@ -10,4 +10,5 @@ data/cats/*
 saved_models/*
 !saved_models/.gitkeep 
 !saved_models/generator.pt
+!saved_models/progression.gif
 runs/*
