@@ -25,7 +25,7 @@ The WGAN has a loss function for both the generator and the discriminator:
 
 $$
 \begin{aligned}
-b&=a \\
+\text{Loss}_G& \\
 a&=c
 \end{aligned}
 $$
